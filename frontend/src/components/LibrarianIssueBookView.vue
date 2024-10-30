@@ -1,6 +1,6 @@
 <template>
     <div class="container">
-        <h2>Выдача книги</h2>
+        <h1>Выдача книги</h1>
 
         <div class="form-group">
             <label for="studentId">Номер студенческого билета:</label>
@@ -45,7 +45,6 @@
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
         <p v-if="successMessage" class="success">{{ successMessage }}</p>
 
-        <router-link to="/librarian">Назад</router-link>
     </div>
 </template>
 

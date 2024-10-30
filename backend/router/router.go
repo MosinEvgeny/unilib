@@ -31,11 +31,19 @@ func SetupRouter() *gin.Engine {
 	// Маршруты для заказов
 	router.GET("/orders/:readerId", controllers.GetReaderOrders)
 	router.POST("/issue", controllers.IssueBook)
+	router.GET("/issues/by-student-id/:studentId", controllers.GetIssuesByStudentID)
+	router.GET("/reader/:studentId/issues", controllers.GetReaderIssues)
 
 	// Ещё для чего-то
 	router.GET("/issue/:issueId", controllers.GetIssueByID)
 	router.POST("/librarian/register-reader", controllers.LibrarianRegisterReader)
 	router.PUT("/issue/:issueId/return", controllers.ReturnBook)
+
+	// Маршруты для отчётов
+	router.GET("/reports/operations", controllers.GenerateOperationsReportData)
+	router.POST("/reports/operations/generate", controllers.GenerateOperationsReportFile)
+	router.GET("/reports", controllers.GetAllReports)
+	router.DELETE("/reports/:reportId", controllers.DeleteReport)
 
 	return router
 }

@@ -1,6 +1,6 @@
 <template>
     <div class="container">
-        <h2>Поиск книг</h2>
+        <h1>Поиск книг</h1>
 
         <div class="search-filters">
             <input type="text" v-model="searchQuery" placeholder="Поиск по названию или автору...">
@@ -16,7 +16,6 @@
         </ul>
         <p v-else-if="searchPerformed">Книги не найдены.</p>
 
-        <router-link to="/librarian">Назад</router-link>
     </div>
 </template>
 

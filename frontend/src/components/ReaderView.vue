@@ -1,15 +1,14 @@
 <template>
     <div class="container">
-        <h1>UniLib - Каталог книг</h1>
+        <h1>Каталог книг</h1>
 
         <div class="search-filters">
             <input type="text" v-model="searchQuery" placeholder="Поиск...">
             <button @click="searchBooks">Поиск</button>
-            <!-- Дополнительные фильтры (по категории, году и т.д.) -->
         </div>
 
-        <ul class="book-list">
-            <li v-for="book in books" :key="book.book_id">
+        <div class="book-grid" v-if="books.length > 0">
+            <div v-for="book in books" :key="book.book_id" class="book-item">
                 <h3>{{ book.title }}</h3>
                 <p>Автор: {{ book.author }}</p>
                 <p v-if="book.availableCopies !== undefined">
@@ -17,11 +16,8 @@
                 </p>
                 <p v-else-if="book.availableCopies === 0">Нет в наличии</p>
                 <p v-else>Загрузка...</p>
-            </li>
-        </ul>
-
-        <router-link to="/reader/history">История заказов</router-link>
-        <button @click="logout">Выход</button>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -84,4 +80,27 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.search-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.book-list li {
+    background-color: #f8f8f8;
+}
+
+.book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.book-item {
+    /*  Добавляем  стили  для  .book-item  */
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 1rem;
+}
+</style>

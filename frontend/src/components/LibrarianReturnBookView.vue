@@ -1,65 +1,84 @@
 <template>
     <div class="container">
-        <h2>Прием книги</h2>
+        <h1>Прием книги</h1>
 
         <div class="form-group">
-            <label for="issueId">ID выдачи:</label>
-            <input type="text" id="issueId" v-model="issueId" required>
-            <button @click="fetchIssue">Найти выдачу</button>
+            <label for="studentId">Номер студенческого билета:</label>
+            <input type="text" id="studentId" v-model="studentId" required>
+            <button @click="fetchIssues">Найти выдачи</button>
         </div>
 
-        <div v-if="issue" class="issue-info">
-            <h3>Информация о выдаче:</h3>
-            <p>ID читателя: {{ issue.reader_id }}</p>
-            <p>ID книги: {{ issue.book_id }}</p>
-            <p>Дата выдачи: {{ formatDate(issue.issue_date) }}</p>
-            <p>Срок возврата: {{ formatDate(issue.due_date) }}</p>
-            <p v-if="issue.return_date">Книга уже возвращена: {{ formatDate(issue.return_date) }}</p>
+        <div v-if="activeIssues.length > 0">
+            <h3>Активные выдачи:</h3>
+            <ul class="issue-list">
+                <li v-for="issue in activeIssues" :key="issue.issue_id">
+                    <p>ID выдачи: {{ issue.issue_id }}</p>
+                    <p>Название книги: {{ issue.book_title }}</p>
+                    <p>Дата выдачи: {{ formatDate(issue.issue_date) }}</p>
+                    <p>Срок возврата: {{ formatDate(issue.due_date) }}</p>
+                    <button v-if="!issue.return_date" @click="returnBook(issue.issue_id)"
+                        :disabled="isReturning">Принять книгу</button>
+                </li>
+            </ul>
         </div>
+        <p v-else-if="searchPerformed">Активных выдач не найдено.</p>
 
-        <button v-if="issue && !issue.return_date" @click="returnBook" :disabled="isReturning">
-            Принять книгу
-        </button>
+        <div v-if="returnedIssues.length > 0">
+            <h3>История выдач:</h3>
+            <ul class="issue-list">
+                <li v-for="issue in returnedIssues" :key="issue.issue_id">
+                    <p>ID выдачи: {{ issue.issue_id }}</p>
+                    <p>Название книги: {{ issue.book_title }}</p>
+                    <p>Дата выдачи: {{ formatDate(issue.issue_date) }}</p>
+                    <p>Срок возврата: {{ formatDate(issue.due_date) }}</p>
+                </li>
+            </ul>
+        </div>
+        <p v-else-if="searchPerformed">Выдачи не найдены.</p>
+
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
         <p v-if="successMessage" class="success">{{ successMessage }}</p>
-
-        <router-link to="/librarian">Назад</router-link>
     </div>
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import axios from 'axios';
 
 export default {
     setup() {
-        const issueId = ref('');
-        const issue = ref(null);
+        const studentId = ref('');
+        const issues = ref([]);
         const errorMessage = ref('');
         const successMessage = ref('');
         const isReturning = ref(false);
+        const searchPerformed = ref(false);
+        const activeIssues = computed(() => issues.value.filter(issue => !issue.return_date));
+        const returnedIssues = computed(() => issues.value.filter(issue => issue.return_date));
 
-        const fetchIssue = async () => {
+        const fetchIssues = async () => {
             try {
-                const response = await axios.get(`http://localhost:8080/issue/${issueId.value}`);
-                issue.value = response.data;
+                const response = await axios.get(`http://localhost:8080/reader/${studentId.value}/issues`);
+                issues.value = response.data;
+                searchPerformed.value = true;
                 errorMessage.value = '';
             } catch (error) {
-                issue.value = null;
-                errorMessage.value = 'Выдача не найдена.';
+                issues.value = [];
+                errorMessage.value = 'Ошибка при поиске выдач.';
+                console.error('Ошибка при поиске выдач:', error);
             }
         };
 
-        const returnBook = async () => {
+        const returnBook = async (issueId) => {
             try {
                 isReturning.value = true;
-                const response = await axios.put(`http://localhost:8080/issue/${issueId.value}/return`);
+                const response = await axios.put(`http://localhost:8080/issue/${issueId}/return`);
 
                 if (response.status === 200) {
                     successMessage.value = 'Книга успешно принята.';
                     errorMessage.value = '';
-                    issue.value = null; //  Сбросить информацию о выдаче 
-                    issueId.value = '';
+                    //  Обновляем  список  выдач  после  приема  книги 
+                    await fetchIssues();
                 } else {
                     const errorData = await response.json();
                     errorMessage.value = errorData.error || 'Произошла ошибка при приеме книги.';
@@ -78,19 +97,20 @@ export default {
         };
 
         return {
-            issueId,
-            issue,
+            studentId,
+            issues,
             errorMessage,
             successMessage,
             isReturning,
-            fetchIssue,
+            searchPerformed,
+            fetchIssues,
             returnBook,
-            formatDate
+            formatDate,
+            activeIssues,
+            returnedIssues,
         };
     },
 };
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

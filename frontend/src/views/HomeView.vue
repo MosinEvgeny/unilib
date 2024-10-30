@@ -14,7 +14,7 @@
       <button type="submit">Войти</button>
       <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
     </form>
-    <router-link to="/register">Зарегистрироваться</router-link>
+    <p>Нет аккаунта? <router-link to="/register">Зарегистрироваться</router-link></p>
   </div>
 </template>
 
@@ -46,15 +46,16 @@ export default {
           const data = await response.json();
           console.log('Ответ сервера:', data);
 
+          localStorage.setItem('role', data.role);
+          localStorage.setItem('username', data.username);
+
           if (data.role === 'admin') {
-            localStorage.setItem('role', data.role);
-            router.push('/admin');
+            router.push('/admin/manage-books');
           } else if (data.role === 'librarian') {
-            localStorage.setItem('role', data.role);
-            router.push('/librarian');
+            router.push('/librarian/search-book');
           } else if (data.role === 'reader') {
-            localStorage.setItem('role', data.role);
             localStorage.setItem('reader_id', data.reader_id);
+            localStorage.setItem('student_id', data.student_id);
             router.push('/reader');
           } else {
             errorMessage.value = 'Неизвестная  роль  пользователя.';
@@ -75,4 +76,16 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.container {
+  /* ... (другие стили) ... */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Выравнивание по горизонтали */
+  justify-content: center;
+  /* Выравнивание по вертикали */
+  height: 100vh;
+  /* Занимаем всю высоту экрана */
+}
+</style>

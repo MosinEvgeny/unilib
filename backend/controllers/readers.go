@@ -2,10 +2,11 @@ package controllers
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
-	"github.com/MosinEvgeny/unilib/backend/db"     // Замени your-username
-	"github.com/MosinEvgeny/unilib/backend/models" // Замени your-username
+	"github.com/MosinEvgeny/unilib/backend/db"
+	"github.com/MosinEvgeny/unilib/backend/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -53,7 +54,7 @@ func RegisterReader(c *gin.Context) {
 	}
 
 	// Вставка нового читателя в базу данных
-	_, err = db.DB.Exec("INSERT INTO readers (full_name, faculty, course, student_id, phone_number, username, password) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+	_, err = db.DB.Exec("INSERT INTO readers (full_name, faculty, course, student_id, phone_number, username, password, registration_date) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_DATE)",
 		reader.FullName, reader.Faculty, reader.Course, reader.StudentID, reader.Phone_number, reader.Username, reader.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -115,7 +116,7 @@ func LibrarianRegisterReader(c *gin.Context) {
 	}
 
 	// Вставка нового читателя в базу данных
-	_, err = db.DB.Exec("INSERT INTO readers (full_name, faculty, course, student_id, phone_number, username, password) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+	_, err = db.DB.Exec("INSERT INTO readers (full_name, faculty, course, student_id, phone_number, username, password, registration_date) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_DATE)",
 		reader.FullName, reader.Faculty, reader.Course, reader.StudentID, reader.Phone_number, reader.Username, reader.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -145,7 +146,20 @@ func GetReaderByID(c *gin.Context) {
 }
 
 func GetAllReaders(c *gin.Context) {
-	rows, err := db.DB.Query("SELECT * FROM readers WHERE role = 'reader'")
+	searchQuery := c.Query("search")
+	var query string
+	if searchQuery != "" {
+		query = fmt.Sprintf(`
+      SELECT * 
+      FROM readers 
+      WHERE role = 'reader' 
+        AND (full_name ILIKE '%%%s%%' OR student_id ILIKE '%%%s%%')
+    `, searchQuery, searchQuery)
+	} else {
+		query = "SELECT * FROM readers WHERE role = 'reader'"
+	}
+
+	rows, err := db.DB.Query(query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -155,7 +169,7 @@ func GetAllReaders(c *gin.Context) {
 	var readers []models.Reader
 	for rows.Next() {
 		var reader models.Reader
-		err := rows.Scan(&reader.ReaderID, &reader.FullName, &reader.Faculty, &reader.Course, &reader.StudentID, &reader.Phone_number, &reader.Username, &reader.Password)
+		err := rows.Scan(&reader.ReaderID, &reader.FullName, &reader.Faculty, &reader.Course, &reader.StudentID, &reader.Phone_number, &reader.Username, &reader.Password, &reader.Role, &reader.RegistrationDate)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -231,7 +245,7 @@ func GetReaderByStudentID(c *gin.Context) {
 
 	var reader models.Reader
 	err := db.DB.QueryRow("SELECT * FROM readers WHERE student_id = $1", studentID).Scan(
-		&reader.ReaderID, &reader.FullName, &reader.Faculty, &reader.Course, &reader.StudentID, &reader.Phone_number, &reader.Username, &reader.Password, &reader.Role,
+		&reader.ReaderID, &reader.FullName, &reader.Faculty, &reader.Course, &reader.StudentID, &reader.Phone_number, &reader.Username, &reader.Password, &reader.Role, &reader.RegistrationDate,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {

@@ -1,6 +1,6 @@
 <template>
     <div class="container">
-        <h2>Управление книгами</h2>
+        <h1>Управление книгами</h1>
 
         <h3>Добавить новую книгу</h3>
         <form @submit.prevent="addBook">
@@ -43,10 +43,21 @@
 
         <h3>Редактировать книгу</h3>
         <div class="form-group">
-            <label for="editBookId">ID книги для редактирования:</label>
-            <input type="number" id="editBookId" v-model="editBookId" min="1">
-            <button @click="fetchBook">Загрузить книгу</button>
+            <label for="searchQuery">Поиск книги:</label>
+            <input type="text" id="searchQuery" v-model="searchQuery" placeholder="Название, автор или ISBN">
+            <button @click="searchBooks">Поиск</button>
         </div>
+
+        <div v-if="searchResults.length > 0">
+            <h3>Результаты поиска:</h3>
+            <ul>
+                <li v-for="book in searchResults" :key="book.book_id">
+                    {{ book.title }} - {{ book.author }} (ISBN: {{ book.isbn }})
+                    <button @click="selectBookForEdit(book)">Загрузить книгу</button>
+                </li>
+            </ul>
+        </div>
+        <p v-else-if="searchPerformed">Книги не найдены.</p>
 
         <form v-if="editingBook" @submit.prevent="updateBook">
             <div class="form-group">
@@ -67,11 +78,11 @@
             </div>
             <div class="form-group">
                 <label for="editPublicationYear">Год издания:</label>
-                <input type="number" id="editPublicationYear" v-model="editingBook.publicationYear">
+                <input type="number" id="editPublicationYear" v-model="editingBook.publication_year">
             </div>
             <div class="form-group">
                 <label for="editTotalCopies">Количество экземпляров:</label>
-                <input type="number" id="editTotalCopies" v-model="editingBook.totalCopies" min="1" required>
+                <input type="number" id="editTotalCopies" v-model="editingBook.total_copies" min="1" required>
             </div>
             <div class="form-group">
                 <label for="editCategory">Категория:</label>
@@ -88,19 +99,38 @@
 
         <h3>Списать книгу</h3>
         <div class="form-group">
-            <label for="removeBookId">ID книги для списания:</label>
-            <input type="number" id="removeBookId" v-model="removeBookId" min="1">
-            <button @click="removeBook" :disabled="isRemoving">Списать</button>
+            <label for="searchQueryRemoval">Поиск книги:</label>
+            <input type="text" id="searchQueryRemoval" v-model="searchQueryRemoval"
+                placeholder="Название, автор или ISBN">
+            <button @click="searchBooksForRemoval">Поиск</button>
         </div>
+
+        <div v-if="searchResultsRemoval.length > 0">
+            <h3>Результаты поиска:</h3>
+            <ul>
+                <li v-for="book in searchResultsRemoval" :key="book.book_id">
+                    {{ book.title }} - {{ book.author }} (ISBN: {{ book.isbn }})
+                    <button @click="selectBookForRemoval(book)">Выбрать для списания</button>
+                </li>
+            </ul>
+        </div>
+        <p v-else-if="searchPerformedRemoval">Книги не найдены.</p>
+
+        <div v-if="selectedBookForRemoval" class="book-info">
+            <h3>Выбранная книга:</h3>
+            <p>Название: {{ selectedBookForRemoval.title }}</p>
+            <p>Автор: {{ selectedBookForRemoval.author }}</p>
+            <p>ISBN: {{ selectedBookForRemoval.isbn }}</p>
+        </div>
+        <button v-if="selectedBookForRemoval" @click="removeBook" :disabled="isRemoving">Списать</button>
         <p v-if="removeErrorMessage" class="error">{{ removeErrorMessage }}</p>
         <p v-if="removeSuccessMessage" class="success">{{ removeSuccessMessage }}</p>
 
-        <router-link to="/admin">Назад</router-link>
     </div>
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
 export default {
@@ -130,24 +160,79 @@ export default {
         const removeErrorMessage = ref('');
         const removeSuccessMessage = ref('');
         const isRemoving = ref(false);
-        
+
         const books = ref([]);
+
+        const searchQuery = ref('');
+        const searchResults = ref([]);
+        const searchPerformed = ref(false);
+
+        const searchQueryRemoval = ref('');
+        const searchResultsRemoval = ref([]);
+        const searchPerformedRemoval = ref(false);
+
+        const selectedBookForRemoval = ref(null);
+
+        const fetchAllBooks = async () => {
+            try {
+                const response = await axios.get('http://localhost:8080/books');
+                books.value = response.data;
+            } catch (error) {
+                console.error('Ошибка при загрузке книг:', error);
+            }
+        };
+
+        const searchBooks = async () => {
+            try {
+                const response = await axios.get(`http://localhost:8080/books?search=${searchQuery.value}`);
+                searchResults.value = response.data;
+                searchPerformed.value = true;
+            } catch (error) {
+                console.error('Ошибка при поиске книг:', error);
+            }
+        };
+
+        const searchBooksForRemoval = async () => {
+            try {
+                const response = await axios.get(`http://localhost:8080/books?search=${searchQueryRemoval.value}`);
+                searchResultsRemoval.value = response.data;
+                searchPerformedRemoval.value = true;
+            } catch (error) {
+                console.error('Ошибка при поиске книг:', error);
+            }
+        };
+
+        const selectBookForEdit = (book) => {
+            editingBook.value = { ...book };
+            searchResults.value = [];
+            searchQuery.value = '';
+            searchPerformed.value = false;
+        };
+
+        const selectBookForRemoval = (book) => {
+            selectedBookForRemoval.value = book;
+            searchResultsRemoval.value = [];
+            searchQueryRemoval.value = '';
+            searchPerformedRemoval.value = false;
+        };
 
         const removeBook = async () => {
             try {
                 isRemoving.value = true;
-                const response = await axios.delete(`http://localhost:8080/books/${removeBookId.value}`);
+                const response = await axios.delete(`http://localhost:8080/books/${selectedBookForRemoval.value.book_id}`);
 
                 if (response.status === 200) {
-                    removeSuccessMessage.value = 'Книга успешно списана.';
+                    removeSuccessMessage.value = 'Книга  успешно  списана.';
                     removeErrorMessage.value = '';
-                    removeBookId.value = null;
+                    selectedBookForRemoval.value = null;
+                    //  Обновить список книг после списания
+                    await fetchAllBooks();
                 } else {
                     const errorData = await response.json();
                     removeErrorMessage.value = errorData.error || 'Произошла ошибка при списании книги.';
                 }
             } catch (error) {
-                console.error('Ошибка при списании книги:', error);
+                console.error('Ошибка  при  списании  книги:', error);
                 removeErrorMessage.value = 'Произошла ошибка. Попробуйте позже.';
             } finally {
                 isRemoving.value = false;
@@ -204,6 +289,15 @@ export default {
                         category: '',
                         description: ''
                     };
+
+                    // Получить ID новой книги из ответа 
+                    const newBookData = response.data;
+
+                    // Добавить новую книгу в массив books
+                    books.value.push(newBookData);
+
+                    await fetchAllBooks();
+                    
                 } else {
                     const errorData = await response.json();
                     errorMessage.value = errorData.error || 'Произошла ошибка при добавлении книги.';
@@ -215,6 +309,8 @@ export default {
                 isAdding.value = false;
             }
         };
+
+        onMounted(fetchAllBooks);
 
         return {
             newBook,
@@ -233,11 +329,41 @@ export default {
             removeErrorMessage,
             removeSuccessMessage,
             isRemoving,
+            books,
+            searchQuery,
+            searchResults,
+            searchPerformed,
+            searchQueryRemoval,
+            searchResultsRemoval,
+            searchPerformedRemoval,
+            selectBookForEdit,
+            selectBookForRemoval,
+            selectedBookForRemoval,
             removeBook,
-            books
+            searchBooks,
+            searchBooksForRemoval,
         };
     },
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+
+button {
+    white-space: nowrap;
+}
+</style>

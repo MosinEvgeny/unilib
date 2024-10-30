@@ -1,6 +1,6 @@
 <template>
     <div class="container">
-        <h1>UniLib - История заказов</h1>
+        <h1>История заказов</h1>
 
         <ul v-if="orders && orders.length > 0" class="order-list">
             <li v-for="order in orders" :key="order.issue_id">
@@ -8,13 +8,11 @@
                 <p>Дата выдачи: {{ formatDate(order.issue_date) }}</p>
                 <p>Срок возврата: {{ formatDate(order.due_date) }}</p>
                 <p v-if="order.return_date">Дата возврата: {{ formatDate(order.return_date) }}</p>
-                <p v-else-if="isOverdue(order.due_date)">Просрочено</p>
-                <p v-else>Не возвращена</p>
+                <p v-else-if="isOverdue(order.due_date)" style= "color:red">Просрочено</p>
+                <p v-else style= "color:orange" >Не возвращена</p>
             </li>
         </ul>
         <p v-else>У вас нет заказов.</p>
-
-        <button @click="goBack">Назад к каталогу</button>
     </div>
 </template>
 

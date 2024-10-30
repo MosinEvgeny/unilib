@@ -139,7 +139,7 @@ func ReturnBook(c *gin.Context) {
 
 	//  Получение  ID  экземпляра  из  записи  о  выдаче
 	var copyID int
-	err = db.DB.QueryRow("SELECT copy_id FROM issue WHERE issue_id = $1", issueID).Scan(copyID)
+	err = db.DB.QueryRow("SELECT copy_id FROM issue WHERE issue_id = $1", issueID).Scan(&copyID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -153,4 +153,93 @@ func ReturnBook(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Книга успешно принята"})
+}
+
+func GetIssuesByStudentID(c *gin.Context) {
+	studentID := c.Param("studentId")
+
+	rows, err := db.DB.Query(`
+        SELECT i.issue_id, b.title, i.issue_date, i.due_date, i.return_date
+        FROM issue AS i
+        JOIN copies AS c ON i.copy_id = c.copy_id
+        JOIN books AS b ON c.book_id = b.book_id
+        JOIN readers AS r ON i.reader_id = r.reader_id
+        WHERE r.student_id = $1
+    `, studentID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var issues []gin.H
+	for rows.Next() {
+		var issueID int
+		var bookTitle string
+		var issueDate, dueDate, returnDate sql.NullTime
+		err = rows.Scan(&issueID, &bookTitle, &issueDate, &dueDate, &returnDate)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		issue := gin.H{
+			"issue_id":   issueID,
+			"book_title": bookTitle,
+			"issue_date": issueDate.Time.Format("2006-01-02"),
+			"due_date":   dueDate.Time.Format("2006-01-02"),
+		}
+		if returnDate.Valid {
+			issue["return_date"] = returnDate.Time.Format("2006-01-02")
+		}
+
+		issues = append(issues, issue)
+	}
+
+	c.JSON(http.StatusOK, issues)
+}
+
+func GetReaderIssues(c *gin.Context) {
+	studentID := c.Param("studentId")
+
+	rows, err := db.DB.Query(`
+	  SELECT i.issue_id, b.title, i.issue_date, i.due_date, i.return_date
+	  FROM issue AS i
+	  JOIN copies AS c ON i.copy_id = c.copy_id
+	  JOIN books AS b ON c.book_id = b.book_id
+	  JOIN readers AS r ON i.reader_id = r.reader_id
+	  WHERE r.student_id = $1
+	  ORDER BY i.issue_date DESC -- Сортировка по дате выдачи (по убыванию)
+	`, studentID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var issues []gin.H
+	for rows.Next() {
+		var issueID int
+		var bookTitle string
+		var issueDate, dueDate, returnDate sql.NullTime
+		err = rows.Scan(&issueID, &bookTitle, &issueDate, &dueDate, &returnDate)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		issue := gin.H{
+			"issue_id":   issueID,
+			"book_title": bookTitle,
+			"issue_date": issueDate.Time.Format("2006-01-02"),
+			"due_date":   dueDate.Time.Format("2006-01-02"),
+		}
+		if returnDate.Valid {
+			issue["return_date"] = returnDate.Time.Format("2006-01-02")
+		}
+
+		issues = append(issues, issue)
+	}
+
+	c.JSON(http.StatusOK, issues)
 }

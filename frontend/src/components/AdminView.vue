@@ -2,15 +2,16 @@
     <div class="container">
         <h1>UniLib - Панель администратора</h1>
 
-        <nav>
-            <router-link to="/admin/manage-books">Управление книгами</router-link>
-            <router-link to="/admin/manage-readers">Управление читателями</router-link>
-            <router-link to="/admin/reports">Отчеты</router-link>
+        <nav class="admin-nav">
+            <router-link to="/admin/manage-books" class="nav-link">Управление книгами</router-link>
+            <router-link to="/admin/manage-readers" class="nav-link">Управление читателями</router-link>
+            <router-link to="/admin/reports" class="nav-link">Отчеты</router-link>
+            <router-link to="/admin/report-history" class="nav-link">История отчетов</router-link>
+            <button @click="logout">Выход</button>
         </nav>
 
         <router-view />
-
-        <button @click="logout">Выход</button>
+        
     </div>
 </template>
 
@@ -22,7 +23,6 @@ export default {
         const router = useRouter();
 
         const logout = () => {
-            //  Логика  выхода 
             router.push('/');
         };
 
@@ -32,4 +32,25 @@ export default {
 </script>
 
 <style scoped>
+.admin-nav {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.nav-link {
+    padding: 0.8rem 1.6rem;
+    border-radius: 4px;
+    background-color: #fbd604;
+    color: #fff;
+    text-decoration: none;
+}
+
+.nav-link:hover {
+    background-color: darken(#fbd604, 10%);
+}
+
+.router-link-exact-active {
+    background-color: #e6330f;
+}
 </style>

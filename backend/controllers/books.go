@@ -1,11 +1,12 @@
 package controllers
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 
-	"github.com/MosinEvgeny/unilib/backend/db"     // Замени your-username
-	"github.com/MosinEvgeny/unilib/backend/models" // Замени your-username
+	"github.com/MosinEvgeny/unilib/backend/db"
+	"github.com/MosinEvgeny/unilib/backend/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -38,7 +39,7 @@ func CreateBook(c *gin.Context) {
 		return
 	}
 
-	//  Создание  записей  о  копиях  книги
+	//  Создание записей о копиях книги
 	for i := 0; i < book.TotalCopies; i++ {
 		_, err = db.DB.Exec("INSERT INTO copies (book_id, inventory_number, status, acquisition_date) VALUES ($1, $2, 'Доступен', CURRENT_DATE)", book.BookID, fmt.Sprintf("%d-%d", book.BookID, i+1))
 		if err != nil {
@@ -47,7 +48,17 @@ func CreateBook(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Книга успешно добавлена", "book_id": book.BookID})
+	//  Получение данных новой книги
+	var newBook models.Book
+	err = db.DB.QueryRow("SELECT * FROM books WHERE book_id = $1", book.BookID).Scan(
+		&newBook.BookID, &newBook.Title, &newBook.Author, &newBook.ISBN, &newBook.Publisher, &newBook.PublicationYear, &newBook.TotalCopies, &newBook.Category, &newBook.Description,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Книга успешно добавлена", "book_id": newBook.BookID})
 }
 
 func GetAllBooks(c *gin.Context) {
@@ -65,7 +76,12 @@ func GetAllBooks(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+
+		}
+	}(rows)
 
 	var books []models.Book
 	for rows.Next() {

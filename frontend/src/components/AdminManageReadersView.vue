@@ -1,6 +1,11 @@
 <template>
     <div class="container">
-        <h2>Управление читателями</h2>
+        <h1>Управление читателями</h1>
+
+        <div class="search-filters">
+            <input type="text" v-model="searchQuery" placeholder="Поиск по ФИО или номеру студенческого...">
+            <button @click="searchReaders">Поиск</button>
+        </div>
 
         <h3>Список читателей</h3>
         <li v-for="reader in readers" :key="reader.reader_id">
@@ -9,8 +14,8 @@
             <button @click="deleteReader(reader.reader_id)">Удалить</button>
         </li>
 
-        <h3>Редактировать читателя</h3>
         <form v-if="editingReader" @submit.prevent="updateReader">
+            <h3>Редактировать читателя</h3>
             <div class="form-group">
                 <label for="editFullName">ФИО:</label>
                 <input type="text" id="editFullName" v-model="editingReader.full_name" required>
@@ -49,8 +54,8 @@
                 <input type="number" id="editcourse" v-model="editingReader.course" min="1" max="6">
             </div>
             <div class="form-group">
-                <label for="editstudentId">Номер студенческого билета:</label>
-                <input type="text" id="editstudentId" v-model="editingReader.studentId" required>
+                <label for="editStudentId">Номер студенческого билета:</label>
+                <input type="text" id="editStudentId" v-model="editingReader.student_id">
             </div>
             <div class="form-group">
                 <label for="editphone_number">Номер телефона:</label>
@@ -62,7 +67,7 @@
             </div>
             <div class="form-group">
                 <label for="editpassword">Пароль:</label>
-                <input type="password" id="editpassword" v-model="editingReader.password" required>
+                <input type="text" id="editpassword" v-model="editingReader.password" required>
             </div>
             <button type="submit" :disabled="isUpdatingReader">Сохранить</button>
         </form>
@@ -72,7 +77,6 @@
         <p v-if="readerDeleteErrorMessage" class="error">{{ readerDeleteErrorMessage }}</p>
         <p v-if="readerDeleteSuccessMessage" class="success">{{ readerDeleteSuccessMessage }}</p>
 
-        <router-link to="/admin">Назад</router-link>
     </div>
 </template>
 
@@ -89,6 +93,16 @@ export default {
         const readerEditSuccessMessage = ref('');
         const readerDeleteErrorMessage = ref('');
         const readerDeleteSuccessMessage = ref('');
+        const searchQuery = ref('');
+
+        const searchReaders = async () => {
+            try {
+                const response = await axios.get(`http://localhost:8080/readers?search=${searchQuery.value}`);
+                readers.value = response.data;
+            } catch (error) {
+                console.error('Ошибка  при  поиске  читателей:', error);
+            }
+        };
 
         const fetchReaders = async () => {
             try {
@@ -161,7 +175,9 @@ export default {
             fetchReaders,
             editReader,
             updateReader,
-            deleteReader
+            deleteReader,
+            searchQuery,
+            searchReaders,
         };
     },
 };

@@ -12,6 +12,7 @@ import LibrarianSearchBookView from '../components/LibrarianSearchBookView.vue';
 import AdminManageBooksView from '../components/AdminManageBooksView.vue';
 import AdminManageReadersView from '../components/AdminManageReadersView.vue';
 import AdminReportsView from '../components/AdminReportsView.vue';
+import AdminReportHistoryView from '../components/AdminReportHistoryView.vue';
 
 
 const router = createRouter({
@@ -46,6 +47,11 @@ const router = createRouter({
           path: 'reports',
           name: 'adminReports',
           component: AdminReportsView
+        },
+        {
+          path: '/admin/report-history',
+          name: 'adminReportHistory',
+          component: AdminReportHistoryView
         }
       ]
     },

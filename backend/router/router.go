@@ -12,10 +12,16 @@ func SetupRouter() *gin.Engine {
 	// CORS middleware
 	router.Use(cors.Default())
 
+	// Маршруты для контрактов
+	router.POST("/contracts", controllers.CreateContract)
+	router.GET("/contracts/:contractId/pdf", controllers.GenerateContractPDF)
+	router.GET("/get-admin", controllers.GetAdmin)
+	router.GET("/get-librarian", controllers.GetLibrarian)
+
 	// Маршруты для книг
 	router.GET("/books", controllers.GetAllBooks)
 	router.GET("/books/:bookId/available", controllers.GetBookAvailableCopies)
-	router.POST("/books", controllers.CreateBook)
+	router.POST("/books", controllers.CreateBooks)
 	router.PUT("/books/:bookId", controllers.UpdateBook)
 	router.DELETE("/books/:bookId", controllers.DeleteBook)
 

@@ -57,7 +57,7 @@ func RegisterReader(c *gin.Context) {
 	_, err = db.DB.Exec("INSERT INTO readers (full_name, faculty, course, student_id, phone_number, username, password, registration_date) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_DATE)",
 		reader.FullName, reader.Faculty, reader.Course, reader.StudentID, reader.Phone_number, reader.Username, reader.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Пользователь с таким номером студенческого уже зарегистрирован"})
 		return
 	}
 
@@ -87,7 +87,7 @@ func LoginReader(c *gin.Context) {
 		return
 	}
 
-	// Проверка пароля (в реальном приложении используй хэширование!)
+	// Проверка пароля (в реальном приложении используй хеширование!)
 	if credentials.Password != reader.Password {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный логин или пароль"})
 		return
@@ -119,7 +119,7 @@ func LibrarianRegisterReader(c *gin.Context) {
 	_, err = db.DB.Exec("INSERT INTO readers (full_name, faculty, course, student_id, phone_number, username, password, registration_date) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_DATE)",
 		reader.FullName, reader.Faculty, reader.Course, reader.StudentID, reader.Phone_number, reader.Username, reader.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Пользователь с таким номером студенческого билета уже зарегистрирован"})
 		return
 	}
 
@@ -164,7 +164,12 @@ func GetAllReaders(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+
+		}
+	}(rows)
 
 	var readers []models.Reader
 	for rows.Next() {
@@ -256,5 +261,25 @@ func GetReaderByStudentID(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusOK, reader)
+}
+
+func GetAdmin(c *gin.Context) {
+	var reader models.Reader
+	err := db.DB.QueryRowx("SELECT full_name FROM readers WHERE role = 'admin' LIMIT 1").StructScan(&reader)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, reader)
+}
+
+func GetLibrarian(c *gin.Context) {
+	var reader models.Reader
+	err := db.DB.QueryRowx("SELECT full_name FROM readers WHERE role = 'librarian' LIMIT 1").StructScan(&reader)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	c.JSON(http.StatusOK, reader)
 }

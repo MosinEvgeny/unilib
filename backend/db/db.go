@@ -1,19 +1,19 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
-var DB *sql.DB
+var DB *sqlx.DB //  Изменено: *sqlx.DB
 
 func InitDB() {
-	connStr := "user=postgres password=pmi-gotosw dbname=unilib sslmode=disable" // Подключись к своей БД
+	connStr := "user=postgres password=pmi-gotosw dbname=unilib sslmode=disable" //  Подключись  к  своей  БД
 	var err error
-	DB, err = sql.Open("postgres", connStr)
+	DB, err = sqlx.Open("postgres", connStr) //  Изменено: sqlx.Open
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,5 +22,6 @@ func InitDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Успешное подключение к базе данных!")
+
+	fmt.Println("Успешное  подключение  к  базе  данных!")
 }

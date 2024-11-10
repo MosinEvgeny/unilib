@@ -2,5 +2,8 @@
 <project version="4">
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/controllers/books.go" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/controllers/contracts.go" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/controllers/readers.go" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/controllers/reports.go" dialect="GenericSQL" />
   </component>
 </project>

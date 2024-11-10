@@ -3,62 +3,106 @@ package controllers
 import (
 	"database/sql"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	"net/http"
+	"os"
 
 	"github.com/MosinEvgeny/unilib/backend/db"
 	"github.com/MosinEvgeny/unilib/backend/models"
 	"github.com/gin-gonic/gin"
 )
 
-func CreateBook(c *gin.Context) {
-	var book models.Book
-	if err := c.BindJSON(&book); err != nil {
+func CreateBooks(c *gin.Context) {
+	var books []models.Book
+	if err := c.BindJSON(&books); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Проверка, существует ли уже книга с таким ISBN (если ISBN указан)
-	if book.ISBN != "" {
-		var count int
-		err := db.DB.QueryRow("SELECT COUNT(*) FROM books WHERE isbn = $1", book.ISBN).Scan(&count)
+	//  Создаем папку для отчетов, если она не существует
+	if _, err := os.Stat("reports"); os.IsNotExist(err) {
+		err := os.Mkdir("reports", 0755)
+		if err != nil {
+			return
+		}
+	}
+
+	tx, err := db.DB.Begin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при начале транзакции: " + err.Error()})
+		return
+	}
+	defer func(tx *sql.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+
+		}
+	}(tx) //  Откат транзакции в случае ошибки
+
+	bookIDs := make([]int, 0, len(books))
+
+	for _, book := range books {
+		// Проверка, существует ли уже книга с таким ISBN (если ISBN указан)
+		if book.ISBN != "" {
+			var count int
+			err := tx.QueryRow("SELECT COUNT(*) FROM books WHERE isbn = $1", book.ISBN).Scan(&count)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			if count > 0 {
+				c.JSON(http.StatusConflict, gin.H{"error": "Книга с таким ISBN уже существует"})
+				return
+			}
+		}
+
+		//  Вставка новой книги в базу данных с RETURNING book_id
+		err := tx.QueryRow("INSERT INTO books (title, author, isbn, publisher, publication_year, total_copies, category, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING book_id",
+			book.Title, book.Author, book.ISBN, book.Publisher, book.PublicationYear, book.TotalCopies, book.Category, book.Description).Scan(&book.BookID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		if count > 0 {
-			c.JSON(http.StatusConflict, gin.H{"error": "Книга с таким ISBN уже существует"})
-			return
+
+		bookIDs = append(bookIDs, book.BookID)
+
+		//  Создание записей о копиях книги
+		for i := 0; i < book.TotalCopies; i++ {
+			_, err = tx.Exec("INSERT INTO copies (book_id, inventory_number, status, acquisition_date) VALUES ($1, $2, 'Доступен', CURRENT_DATE)", book.BookID, fmt.Sprintf("%d-%d", book.BookID, i+1))
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
 		}
 	}
 
-	// Вставка новой книги в базу данных
-	err := db.DB.QueryRow("INSERT INTO books (title, author, isbn, publisher, publication_year, total_copies, category, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING book_id",
-		book.Title, book.Author, book.ISBN, book.Publisher, book.PublicationYear, book.TotalCopies, book.Category, book.Description).Scan(&book.BookID)
+	// Фиксируем транзакцию после успешного добавления всех книг
+	err = tx.Commit()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при завершении транзакции: " + err.Error()})
 		return
 	}
 
-	//  Создание записей о копиях книги
-	for i := 0; i < book.TotalCopies; i++ {
-		_, err = db.DB.Exec("INSERT INTO copies (book_id, inventory_number, status, acquisition_date) VALUES ($1, $2, 'Доступен', CURRENT_DATE)", book.BookID, fmt.Sprintf("%d-%d", book.BookID, i+1))
+	//  Получение данных новых книг
+	var newBooks []models.Book
+	// Используем один запрос для получения всех данных о книгах
+	if len(bookIDs) > 0 { // Проверяем, что были добавлены книги
+		query, args, err := sqlx.In("SELECT * FROM books WHERE book_id IN (?)", bookIDs)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка построения запроса: " + err.Error()})
+			return
+		}
+		// sqlx.In возвращает запрос с placeholder'ами, которые нужно раскрыть с помощью Rebind
+		query = db.DB.Rebind(query)
+		err = db.DB.Select(&newBooks, query, args...)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении данных новых книг: " + err.Error()})
 			return
 		}
 	}
 
-	//  Получение данных новой книги
-	var newBook models.Book
-	err = db.DB.QueryRow("SELECT * FROM books WHERE book_id = $1", book.BookID).Scan(
-		&newBook.BookID, &newBook.Title, &newBook.Author, &newBook.ISBN, &newBook.Publisher, &newBook.PublicationYear, &newBook.TotalCopies, &newBook.Category, &newBook.Description,
-	)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"message": "Книга успешно добавлена", "book_id": newBook.BookID})
+	c.JSON(http.StatusCreated, newBooks)
 }
 
 func GetAllBooks(c *gin.Context) {

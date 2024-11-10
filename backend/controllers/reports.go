@@ -13,7 +13,7 @@ import (
 	"github.com/johnfercher/maroto/pkg/props"
 )
 
-// Report - модель  для  хранения  информации  об  отчете  в  БД
+// Report - модель для хранения информации об отчете в БД
 type Report struct {
 	ReportID      int       `db:"report_id"`
 	ReportDate    time.Time `db:"report_date"`
@@ -29,21 +29,21 @@ func GenerateOperationsReportData(c *gin.Context) {
 	//  Статистика
 	var registeredReaders, issuedBooks, returnedBooks int
 
-	//  Зарегестрированных  читателей
+	//  Зарегистрированных читателей
 	err := db.DB.QueryRow("SELECT COUNT(*) FROM readers WHERE registration_date >= $1", aMonthAgo).Scan(&registeredReaders)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении количества зарегистрированных читателей: " + err.Error()})
 		return
 	}
 
-	//  Выданных  книг
+	//  Выданных книг
 	err = db.DB.QueryRow("SELECT COUNT(*) FROM issue WHERE issue_date >= $1", aMonthAgo).Scan(&issuedBooks)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении количества выданных книг: " + err.Error()})
 		return
 	}
 
-	//  Принятых  книг
+	//  Принятых книг
 	err = db.DB.QueryRow("SELECT COUNT(*) FROM issue WHERE return_date >= $1", aMonthAgo).Scan(&returnedBooks)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении количества принятых книг: " + err.Error()})
@@ -58,7 +58,7 @@ func GenerateOperationsReportData(c *gin.Context) {
 		return
 	}
 
-	//  Получаем  ФИО  администратора  и  библиотекаря
+	//  Получаем ФИО администратора и библиотекаря
 	var adminName, librarianName string
 	err = db.DB.QueryRow("SELECT full_name FROM readers WHERE role = 'admin' LIMIT 1").Scan(&adminName)
 	if err != nil {
@@ -83,7 +83,7 @@ func GenerateOperationsReportData(c *gin.Context) {
 }
 
 func GenerateOperationsReportFile(c *gin.Context) {
-	//  Получаем  данные  из  запроса
+	//  Получаем данные из запроса
 	var reportData struct {
 		RegisteredReaders int    `json:"registeredReaders"`
 		IssuedBooks       int    `json:"issuedBooks"`
@@ -97,15 +97,15 @@ func GenerateOperationsReportFile(c *gin.Context) {
 		return
 	}
 
-	//  Создание  PDF-документа
+	//  Создание PDF-документа
 	m := pdf.NewMaroto(consts.Portrait, consts.A4)
 	m.SetPageMargins(20, 15, 20)
 
-	//  Добавляем  шрифт  с  поддержкой  кириллицы
+	//  Добавляем шрифт с поддержкой кириллицы
 	m.AddUTF8Font("customFont", consts.Normal, "assets/fonts/DejaVuSans.ttf")
 	m.AddUTF8Font("customFontBold", consts.Bold, "assets/fonts/DejaVuSans-BoldOblique.ttf")
 
-	//  Заголовок  отчета
+	//  Заголовок отчета
 	m.Row(20, func() {
 		m.Col(12, func() {
 			m.Text("Отчет о выполненных операциях", props.Text{
@@ -118,7 +118,7 @@ func GenerateOperationsReportFile(c *gin.Context) {
 		})
 	})
 
-	//  Период  отчета
+	//  Период отчета
 	aMonthAgo := time.Now().AddDate(0, -1, 0).Format("02.01.2006")
 	currentDate := time.Now().Format("02.01.2006")
 	m.Row(10, func() {
@@ -174,7 +174,7 @@ func GenerateOperationsReportFile(c *gin.Context) {
 		})
 	})
 
-	//  Ответственные  лица
+	//  Ответственные лица
 	m.Row(20, func() {
 		m.Col(12, func() {
 			m.Text("Ответственные  лица", props.Text{
@@ -246,7 +246,7 @@ func GenerateOperationsReportFile(c *gin.Context) {
 		})
 	})
 
-	//  Сохранение  PDF-документа
+	//  Сохранение PDF-документа
 	reportFileName := fmt.Sprintf("reports/operations_report_%s.pdf", time.Now().Format("2006-01-02_15-04-05"))
 	err := m.OutputFileAndClose(reportFileName)
 	if err != nil {
@@ -254,7 +254,7 @@ func GenerateOperationsReportFile(c *gin.Context) {
 		return
 	}
 
-	//  Сохранение  информации  об  отчете  в  БД
+	//  Сохранение информации об отчете в БД
 	reportContent := fmt.Sprintf("Зарегистрированных читателей: %d\nКниг выдано для чтения: %d\nКниг возвращено: %d\nНовых книг: %d", reportData.RegisteredReaders, reportData.IssuedBooks, reportData.ReturnedBooks, reportData.NewBooks)
 	_, err = db.DB.Exec("INSERT INTO reports (report_date, report_content) VALUES (CURRENT_DATE, $1)", reportContent)
 	if err != nil {
@@ -296,7 +296,7 @@ func GetAllReports(c *gin.Context) {
 func DeleteReport(c *gin.Context) {
 	reportID := c.Param("reportId")
 
-	//  Удаление  отчета  из  базы  данных
+	//  Удаление отчета из базы данных
 	_, err := db.DB.Exec("DELETE FROM reports WHERE report_id = $1", reportID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

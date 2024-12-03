@@ -1,57 +1,58 @@
 <template>
     <div class="container">
-      <h1>Управление книгами</h1>
+        <h1>Управление книгами</h1>
 
-      <h3>Добавить новые книги</h3>
-      <form @submit.prevent="addBooks">
-        <div class="form-group">
-          <button @click="addNewBookField">Добавить поле для книги</button>
-        </div>
-        <div v-for="(book, index) in newBooks" :key="index">
-          <h4>Книга {{ index + 1 }}</h4>
-          <div class="form-group">
-            <label :for="`title-${index}`">Название:</label>
-            <input type="text" :id="`title-${index}`" v-model="newBooks[index].title" required>
-          </div>
-          <div class="form-group">
-            <label :for="`author-${index}`">Автор:</label>
-            <input type="text" :id="`author-${index}`" v-model="newBooks[index].author" required>
-          </div>
-          <div class="form-group">
-            <label :for="`isbn-${index}`">ISBN:</label>
-            <input type="text" :id="`isbn-${index}`" v-model="newBooks[index].isbn">
-          </div>
-          <div class="form-group">
-            <label :for="`publisher-${index}`">Издательство:</label>
-            <input type="text" :id="`publisher-${index}`" v-model="newBooks[index].publisher">
-          </div>
-          <div class="form-group">
-            <label :for="`publication_year-${index}`">Год издания:</label>
-            <input type="number" :id="`publication_year-${index}`" v-model="newBooks[index].publication_year">
-          </div>
-          <div class="form-group">
-            <label :for="`total_copies-${index}`">Количество экземпляров:</label>
-            <input type="number" :id="`total_copies-${index}`" v-model="newBooks[index].total_copies" min="1" required>
-          </div>
-          <div class="form-group">
-            <label :for="`category-${index}`">Категория:</label>
-            <input type="text" :id="`category-${index}`" v-model="newBooks[index].category">
-          </div>
-          <div class="form-group">
-            <label :for="`description-${index}`">Описание:</label>
-            <textarea :id="`description-${index}`" v-model="newBooks[index].description"></textarea>
-          </div>
-          <div class="form-group">
-            <label :for="`price-${index}`">Цена:</label>
-            <input type="number" :id="`price-${index}`" v-model="newBooks[index].price" step="0.01" required>
-          </div>
-        </div>
+        <h3>Добавить новые книги</h3>
+        <form @submit.prevent="addBooks">
+            <div class="form-group">
+                <button @click="addNewBookField">Добавить поле для книги</button>
+            </div>
+            <div v-for="(book, index) in newBooks" :key="index">
+                <h4>Книга {{ index + 1 }}</h4>
+                <div class="form-group">
+                    <label :for="`title-${index}`">Название:</label>
+                    <input type="text" :id="`title-${index}`" v-model="newBooks[index].title" required>
+                </div>
+                <div class="form-group">
+                    <label :for="`author-${index}`">Автор:</label>
+                    <input type="text" :id="`author-${index}`" v-model="newBooks[index].author" required>
+                </div>
+                <div class="form-group">
+                    <label :for="`isbn-${index}`">ISBN:</label>
+                    <input type="text" :id="`isbn-${index}`" v-model="newBooks[index].isbn">
+                </div>
+                <div class="form-group">
+                    <label :for="`publisher-${index}`">Издательство:</label>
+                    <input type="text" :id="`publisher-${index}`" v-model="newBooks[index].publisher">
+                </div>
+                <div class="form-group">
+                    <label :for="`publication_year-${index}`">Год издания:</label>
+                    <input type="number" :id="`publication_year-${index}`" v-model="newBooks[index].publication_year">
+                </div>
+                <div class="form-group">
+                    <label :for="`total_copies-${index}`">Количество экземпляров:</label>
+                    <input type="number" :id="`total_copies-${index}`" v-model="newBooks[index].total_copies" min="1"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label :for="`category-${index}`">Категория:</label>
+                    <input type="text" :id="`category-${index}`" v-model="newBooks[index].category">
+                </div>
+                <div class="form-group">
+                    <label :for="`description-${index}`">Описание:</label>
+                    <textarea :id="`description-${index}`" v-model="newBooks[index].description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label :for="`price-${index}`">Цена:</label>
+                    <input type="number" :id="`price-${index}`" v-model="newBooks[index].price" step="0.01" required>
+                </div>
+            </div>
 
 
-        <button type="submit" :disabled="isAdding">Добавить книги</button>
-        <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
-        <p v-if="successMessage" class="success">{{ successMessage }}</p>
-      </form>
+            <button type="submit" :disabled="isAdding">Добавить книги</button>
+            <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+            <p v-if="successMessage" class="success">{{ successMessage }}</p>
+        </form>
 
         <h3>Редактировать книгу</h3>
         <div class="form-group">
@@ -111,11 +112,13 @@
 
         <h3>Списать книгу</h3>
         <div class="form-group">
-            <label for="searchQueryRemoval">Поиск книги:</label>
-            <input type="text" id="searchQueryRemoval" v-model="searchQueryRemoval"
-                placeholder="Название, автор или ISBN">
-            <button @click="searchBooksForRemoval">Поиск</button>
+            <label for="inventoryNumbers">Инвентарные номера (через запятую):</label>
+            <textarea id="inventoryNumbers" v-model="inventoryNumbers"></textarea>
         </div>
+        <button @click="generateRemovalAct" :disabled="isGeneratingAct">Сформировать акт о списании</button>
+
+        <p v-if="actErrorMessage" class="error">{{ actErrorMessage }}</p>
+        <p v-if="actSuccessMessage" class="success">{{ actSuccessMessage }}</p>
 
         <div v-if="searchResultsRemoval.length > 0">
             <h3>Результаты поиска:</h3>
@@ -142,7 +145,7 @@
 </template>
 
 <script>
-import { ref, onMounted, reactive, watch} from 'vue';
+import { ref, onMounted, reactive, watch } from 'vue';
 import axios from 'axios';
 
 export default {
@@ -175,8 +178,13 @@ export default {
             });
         };
 
-        const adminFullName = ref(''); // ФИО администратора
-        const librarianFullName = ref(''); // ФИО библиотекаря
+        const inventoryNumbers = ref('');
+        const actErrorMessage = ref('');
+        const actSuccessMessage = ref('');
+        const isGeneratingAct = ref(false);
+
+        const adminFullName = ref('');
+        const librarianFullName = ref('');
 
         const editBookId = ref(null);
         const editingBook = ref(null);
@@ -204,6 +212,34 @@ export default {
         const searchPerformedRemoval = ref(false);
 
         const selectedBookForRemoval = ref(null);
+
+        const generateRemovalAct = async () => {
+            if (!inventoryNumbers.value) {
+                actErrorMessage.value = 'Введите инвентарные номера.';
+                return;
+            }
+
+            const numbers = inventoryNumbers.value.split(',').map(num => num.trim());
+
+            try {
+                isGeneratingAct.value = true;
+                const response = await axios.post('http://localhost:8080/removal-act', { inventory_numbers: numbers });
+
+                if (response.status === 200) {
+                    actSuccessMessage.value = 'Акт о списании успешно создан.';
+                    actErrorMessage.value = '';
+                    inventoryNumbers.value = '';
+                } else {
+                    const errorData = await response.json();
+                    actErrorMessage.value = errorData.error || 'Произошла ошибка при создании акта.';
+                }
+            } catch (error) {
+                console.error('Ошибка при создании акта:', error);
+                actErrorMessage.value = 'Произошла ошибка. Попробуйте позже.';
+            } finally {
+                isGeneratingAct.value = false;
+            }
+        };
 
         const fetchAllBooks = async () => {
             try {
@@ -303,93 +339,98 @@ export default {
         };
 
         const addBooks = async () => {
-          try {
-            isAdding.value = true;
+            try {
+                isAdding.value = true;
 
-            //  Получаем данные администратора и библиотекаря
-            const adminResponse = await axios.get('http://localhost:8080/get-admin');
-            const librarianResponse = await axios.get('http://localhost:8080/get-librarian');
+                //  Получаем данные администратора и библиотекаря
+                const adminResponse = await axios.get('http://localhost:8080/get-admin');
+                const librarianResponse = await axios.get('http://localhost:8080/get-librarian');
 
-            const adminFullName = adminResponse.data.full_name;
-            const librarianFullName = librarianResponse.data.full_name;
+                const adminFullName = adminResponse.data.full_name;
+                const librarianFullName = librarianResponse.data.full_name;
 
-            const response = await axios.post('http://localhost:8080/books', newBooks.value);
+                const response = await axios.post('http://localhost:8080/books', newBooks.value);
 
-            if (response.status === 201) {
-              successMessage.value = 'Книги успешно добавлены.';
-              errorMessage.value = '';
+                if (response.status === 201) {
+                    successMessage.value = 'Книги успешно добавлены.';
+                    errorMessage.value = '';
 
-              const addedBooks = response.data; //  Получаем массив добавленных книг
-              books.value = books.value.concat(addedBooks);
+                    const addedBooks = response.data; //  Получаем массив добавленных книг
+                    books.value = books.value.concat(addedBooks);
 
-              //  Создаем массив книг для договора, используя данные из newBooks.value для цены
-              const contractBooks = addedBooks.map((book,  index) => {
-                const originalBook = newBooks.value[index]; //  Данные из формы
-                return {
-                  book_id: book.book_id,
-                  title: book.title,
-                  author: book.author,
-                  price: originalBook.price,   //  Цена из формы
-                  copies: book.total_copies,
-                  sum: originalBook.price * book.total_copies // correct sum
+                    //  Создаем массив книг для договора, используя данные из newBooks.value для цены
+                    const contractBooks = addedBooks.map((book, index) => {
+                        const originalBook = newBooks.value[index]; //  Данные из формы
+                        return {
+                            book_id: book.book_id,
+                            title: book.title,
+                            author: book.author,
+                            price: originalBook.price,   //  Цена из формы
+                            copies: book.total_copies,
+                            sum: originalBook.price * book.total_copies // correct sum
+                        }
+                    });
+
+                    let totalSum = contractBooks.reduce((sum, book) => sum + book.sum, 0);
+
+                    // Создаем договор
+                    const contractResponse = await axios.post('http://localhost:8080/contracts', {
+                        admin_full_name: adminFullName,
+                        librarian_full_name: librarianFullName,
+                        total_books: contractBooks.length,
+                        total_sum: totalSum,
+                        books: contractBooks,
+                    });
+
+                    if (contractResponse.status === 201) {
+                        const contractId = contractResponse.data.contract_id;
+                        await generateContractPDF(contractId);
+                    }
+
+                    //  Очищаем форму после добавления
+                    newBooks.value = [{
+                        title: '',
+                        author: '',
+                        isbn: '',
+                        publisher: '',
+                        publication_year: null,
+                        total_copies: 1,
+                        category: '',
+                        description: '',
+                        price: null
+                    }];
+                    await fetchAllBooks();
+                } else {
+                    const errorData = await response.json(); //  Используем  .json()  для  получения  JSON
+                    errorMessage.value = errorData.error || 'Произошла ошибка при добавлении книг.';
                 }
-              });
-
-              let totalSum = contractBooks.reduce((sum, book) => sum + book.sum, 0);
-
-              // Создаем договор
-              const contractResponse = await axios.post('http://localhost:8080/contracts', {
-                admin_full_name:     adminFullName,
-                librarian_full_name: librarianFullName,
-                total_books:         contractBooks.length,
-                total_sum:           totalSum,
-                books:              contractBooks,
-              });
-
-              if (contractResponse.status === 201) {
-                const contractId = contractResponse.data.contract_id;
-                await generateContractPDF(contractId);
-              }
-
-              //  Очищаем форму после добавления
-              newBooks.value = [{
-                title: '',
-                author: '',
-                isbn: '',
-                publisher: '',
-                publication_year: null,
-                total_copies: 1,
-                category: '',
-                description: '',
-                price: null
-              }];
-              await fetchAllBooks();
-            } else {
-              const errorData = await response.json(); //  Используем  .json()  для  получения  JSON
-              errorMessage.value = errorData.error || 'Произошла ошибка при добавлении книг.';
+            } catch (error) {
+                console.error('Ошибка при добавлении книг:', error);
+                errorMessage.value = 'Произошла ошибка. Попробуйте позже.';
+            } finally {
+                isAdding.value = false;
             }
-          } catch (error) {
-            console.error('Ошибка при добавлении книг:', error);
-            errorMessage.value = 'Произошла ошибка. Попробуйте позже.';
-          } finally {
-            isAdding.value = false;
-          }
         };
 
         const generateContractPDF = async (contractId) => {
-          try {
-            // Отправляем запрос на создание PDF-файла договора
-            await axios.get(`http://localhost:8080/contracts/${contractId}/pdf`);
-            successMessage.value = 'Акт успешно создан';
-          } catch (error) {
-            console.error('Ошибка при создании PDF-файла договора:', error);
-            errorMessage.value = 'Ошибка при создании PDF-файла договора.';
-          }
+            try {
+                // Отправляем запрос на создание PDF-файла договора
+                await axios.get(`http://localhost:8080/contracts/${contractId}/pdf`);
+                successMessage.value = 'Акт успешно создан';
+            } catch (error) {
+                console.error('Ошибка при создании PDF-файла договора:', error);
+                errorMessage.value = 'Ошибка при создании PDF-файла договора.';
+            }
         };
 
         onMounted(fetchAllBooks);
 
         return {
+            inventoryNumbers,
+            actErrorMessage,
+            actSuccessMessage,
+            isGeneratingAct,
+            generateRemovalAct,
             addNewBookField,
             newBooks,
             errorMessage,

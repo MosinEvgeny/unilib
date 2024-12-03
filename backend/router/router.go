@@ -50,6 +50,7 @@ func SetupRouter() *gin.Engine {
 	router.POST("/reports/operations/generate", controllers.GenerateOperationsReportFile)
 	router.GET("/reports", controllers.GetAllReports)
 	router.DELETE("/reports/:reportId", controllers.DeleteReport)
+	router.POST("/removal-act", controllers.GenerateRemovalAct)
 
 	return router
 }

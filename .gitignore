@@ -1,5 +1,4 @@
 backend/reports/
-.idea/
 frontend/.idea
 frontend/.vscode
 frontend/node_modules

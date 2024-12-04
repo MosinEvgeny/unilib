@@ -94,10 +94,6 @@
                 <input type="number" id="editPublicationYear" v-model="editingBook.publication_year">
             </div>
             <div class="form-group">
-                <label for="editTotalCopies">Количество экземпляров:</label>
-                <input type="number" id="editTotalCopies" v-model="editingBook.total_copies" min="1" required>
-            </div>
-            <div class="form-group">
                 <label for="editCategory">Категория:</label>
                 <input type="text" id="editCategory" v-model="editingBook.category">
             </div>

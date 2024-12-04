@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/MosinEvgeny/unilib/backend/db"
-	"github.com/MosinEvgeny/unilib/backend/router"
+	"github.com/MosinEvgeny/unilib/backend/internal/database"
+	"github.com/MosinEvgeny/unilib/backend/internal/router"
 )
 
 func main() {

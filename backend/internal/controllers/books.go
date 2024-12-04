@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/MosinEvgeny/unilib/backend/db"
-	"github.com/MosinEvgeny/unilib/backend/models"
+	"github.com/MosinEvgeny/unilib/backend/internal/database"
+	"github.com/MosinEvgeny/unilib/backend/internal/models"
 	"github.com/gin-gonic/gin"
 )
 

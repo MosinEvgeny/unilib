@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/MosinEvgeny/unilib/backend/db"
-	"github.com/MosinEvgeny/unilib/backend/models"
+	"github.com/MosinEvgeny/unilib/backend/internal/database"
+	"github.com/MosinEvgeny/unilib/backend/internal/models"
 	"github.com/gin-gonic/gin"
 	"github.com/johnfercher/maroto/pkg/consts"
 	"github.com/johnfercher/maroto/pkg/pdf"

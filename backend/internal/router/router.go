@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/MosinEvgeny/unilib/backend/controllers"
+	"github.com/MosinEvgeny/unilib/backend/internal/controllers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
